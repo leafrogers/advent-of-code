@@ -23,7 +23,7 @@
 				min = index;
 			}
 
-			// console.log('prevIndex', prevIndex, 'index', index, 'max', max);
+			// console.log('index', index, 'max', max);
 		});
 
 		return [min, max];
@@ -97,9 +97,9 @@
 				xGridIndex += 1
 			) {
 				if (xGridIndex === 0 && yGridIndex === 0) {
-					columns.push(CHAR_START);
+					columns.push({ marker: CHAR_START });
 				} else {
-					columns.push(CHAR_SPACE);
+					columns.push({ marker: CHAR_SPACE });
 				}
 			}
 
@@ -111,8 +111,8 @@
 	};
 
 	const getStartCoordinates = () => {
-		const y = rows.findIndex((row) => row.includes(CHAR_START));
-		const x = rows[y].indexOf(CHAR_START);
+		const y = rows.findIndex((row) => row.find((col) => col.marker === CHAR_START));
+		const x = rows[y].findIndex((col) => col.marker === CHAR_START);
 
 		return [x, y];
 	};
@@ -138,40 +138,30 @@
 		['R', () => { xIndex += 1; }]
 	]);
 
-	let stepsBeforeOverlap = 0;
-
 	const markSpot = ({
-		direction, isJunction, isLastCode
+		direction, isJunction, isLastCode, distanceTravelled, wireIndex
 	}) => {
 		const row = rows[yIndex];
 		const spot = row[xIndex];
 
-		console.log('row before', row);
-
-		if (spot === lineMapOpposites.get(direction)) {
-			row[xIndex] = CHAR_OVERLAP;
-			stepsBeforeOverlap = 0;
+		if (spot.marker === lineMapOpposites.get(direction) || spot[0] === CHAR_JUNCTION) {
+			// console.log('umm', Number(spot.slice(1)), distanceTravelled, (Number(spot.slice(1)) + distanceTravelled));
+			spot.marker = CHAR_OVERLAP;
+			// row[xIndex].marker = CHAR_OVERLAP + wireIndex (Number(spot.slice(1)) + distanceTravelled);
+		} else if (spot.marker === lineMap.get(direction)) {
+			// spot.marker = spot + distanceTravelled;
+		} else if (isJunction && !isLastCode) {
+			spot.marker = CHAR_JUNCTION;
+			// spot.marker = CHAR_JUNCTION + distanceTravelled;
+		} else if (spot.marker === CHAR_SPACE || isLastCode) {
+			spot.marker = lineMap.get(direction);
+			// spot.marker = lineMap.get(direction) + distanceTravelled;
 		} else {
-			if (spot === lineMap.get(direction)) {
-				row[xIndex] = spot;
-			} else if (isJunction && !isLastCode) {
-				row[xIndex] = CHAR_JUNCTION;
-			} else if (spot === CHAR_SPACE || isLastCode) {
-				// console.log('hi', newRow[xIndex]);
-				row[xIndex] = lineMap.get(direction);
-				// console.log('bye', newRow[xIndex]);
-			} else {
-				console.log('spot', spot);
-				row[xIndex] = CHAR_SPACE;
-			}
-
-			stepsBeforeOverlap += 1;
+			throw new Error('No mate');
 		}
-
-		console.log('row after', rows[yIndex]);
 	};
 
-	const operateOnCode = ({ code, isLastCode }) => {
+	const operateOnCode = ({ code, isLastCode, distanceTravelled }) => {
 		const [direction] = code;
 		const distance = Number(code.slice(1));
 		const incrementDirection = operationMap.get(direction);
@@ -181,7 +171,10 @@
 		for (let i = 0; i < distance; i += 1) {
 			incrementDirection();
 			markSpot({
-				direction, isJunction: i === distance - 1, isLastCode
+				direction,
+				isJunction: i === distance - 1,
+				isLastCode,
+				distanceTravelled: distanceTravelled + i
 			});
 		}
 	};
@@ -195,8 +188,16 @@
 
 		// console.log('x:', xIndex, 'y:', yIndex);
 
-		for (let i = 0, l = codeArray.length; i < l; i += 1) {
-			operateOnCode({ code: codeArray[i], isLastCode: i === l - 1 });
+		for (
+			let i = 0, l = codeArray.length, distanceTravelled = 1;
+			i < l;
+			i += 1, distanceTravelled += Number(codeArray[i ? i - 1 : 0].slice(1))
+		) {
+			operateOnCode({
+				code: codeArray[i],
+				isLastCode: i === l - 1,
+				distanceTravelled
+			});
 		}
 
 		console.log('operated on code array.');
@@ -217,9 +218,9 @@
 				columnIndex < numColumns;
 				columnIndex += 1
 			) {
-				if (rows[rowIndex][columnIndex][0] === CHAR_OVERLAP) {
+				if (rows[rowIndex][columnIndex].marker === CHAR_OVERLAP) {
 					const xDelta = Math.abs(columnIndex - startX);
-					const yDelta = Math.abs(startY - rowIndex);
+					const yDelta = Math.abs(rowIndex - startY);
 
 					crossings.push({
 						x: columnIndex,
@@ -227,13 +228,13 @@
 						xDelta,
 						yDelta,
 						distance: xDelta + yDelta,
-						stepsToOverlap: Number(rows[rowIndex][columnIndex].slice(1))
+						//stepsToOverlap: Number(rows[rowIndex][columnIndex].slice(1))
 					});
 				}
 			}
 		}
 
-		console.log(`got crossings ${crossings.length}.`);
+		console.log(`got ${crossings.length} crossings.`);
 		return crossings;
 	};
 
@@ -241,7 +242,7 @@
 		'R8,U5,L5,D3',
 		'U7,R6,D4,L4',
 		// 'R75,D30,R83,U83,L12,D49,R71,U7,L72',
-		// 'U62,R66,U55,R34,D71,R55,D58,R83',
+		// 'U62,R66,U55,R34,D71,R55,D58,R83'
 		// 'R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51',
 		// 'U98,R91,D20,R16,D67,R40,U7,R15,U6,R7'
 		// 'R1004,D53,L10,U126,R130,U533,R48,D185,L768,U786,L445,U694,L659,D237,R432,U147,R590,U200,R878,D970,L308,D134,R617,U431,L631,D548,L300,D509,R660,U698,L958,U170,R572,U514,R387,D385,L670,D374,R898,U870,L545,D262,L699,D110,R58,D84,R77,D58,L891,U9,R320,D914,L161,D148,L266,D334,R442,D855,R349,D618,R272,U514,R584,D269,R608,U542,L335,U855,L646,D678,R720,U325,L792,U60,L828,D915,L487,D253,L911,U907,R392,D981,R965,D725,R308,D574,L997,D332,L927,D855,R122,D5,L875,D336,L395,U697,R806,U420,R718,D575,L824,U397,L308,D988,L855,U332,R838,U853,L91,U778,R265,U549,L847,D665,L804,D768,L736,D201,L825,U87,L747,D375,L162,U336,R375,U754,R468,U507,R256,D107,L79,U871,L155,D667,L448,D847,L193,U263,R154,U859,R696,D222,R189,D307,R332,U522,L345,D961,L161,U274,L122,U931,L812,D852,R906,D269,R612,D723,L304,U944,R64,D20,R401,D260,L95,U278,R128,U637,L554,D650,L116,D720,R12,D434,R514,U379,L899,D359,R815,D843,L994,U775,R63,D942,R655,D91,L236,U175,L813,D572,R520,U812,L657,D935,L886,D178,R618,U260,R7,D953,L158,D471,R309,D858,R25,U746,R40,U832,L544,D311,R122,D224,L281,D699,R147,D310,R659,D662,L990,U160,L969,D335,L923,U201,R336,D643,R226,D91,R88,U350,L303,U20,L157,U987,L305,U766,R253,D790,R977,U482,R283,U793,R785,D799,L511,D757,L689,D841,L233,U742,L551,D466,R66,U579,L18,U838,R554,D143,L996,U557,L783,D799,R36,D563,L244,U440,L8,D945,L346,D747,L769,U661,L485,U965,L569,U952,R57,U773,L267,U453,R424,U66,R763,U105,R285,D870,L179,U548,L46,U914,L251,U194,L559,U736,R768,D917,R617,D55,R185,D464,L244',
@@ -252,10 +253,11 @@
 
 	opsGroup.forEach(operateOnCodeArray);
 
-	console.log(rows.map((columns) => columns.join('')).join('\n'));
+	console.log(rows.map((columns) => columns.map((column) => column.marker).join('')).join('\n'));
 
 	const crossings = getCrossings();
 
 	console.log('Crossings:', crossings);
 	console.log('Closest crossing:', crossings.sort((a, b) => a.distance - b.distance)[0]);
+	console.log('Crossing with fewest total steps:', crossings.sort((a, b) => a.stepsToOverlap - b.stepsToOverlap)[0]);
 })();
