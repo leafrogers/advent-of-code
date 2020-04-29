@@ -15,6 +15,7 @@ module.exports = {
     ecmaVersion: 2018,
   },
   rules: {
+	'arrow-body-style': 0,
 	'comma-dangle': 0,
 	'indent': ['error', 'tab'],
 	'max-len': 0,
