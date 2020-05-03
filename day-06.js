@@ -1,5 +1,3 @@
-/* eslint-disable consistent-return */
-
 const rawInput = `YQ2)CYG
 63M)X4N
 7YF)LRN
@@ -1493,13 +1491,15 @@ ZK7)DYD
 7SX)BYW`;
 const input = rawInput.split('\n').map((rel) => rel.split(')'));
 const orbits = { COM: {} };
-const findById = (id, currentObj, depth = 0) => {
+/* eslint-disable-next-line consistent-return */
+const findById = (id, currentObj, path = []) => {
 	if (currentObj[id]) {
-		return [currentObj[id], depth];
+		path.push(id);
+		return [currentObj[id], path];
 	}
 
 	for (const key of Object.keys(currentObj)) {
-		const result = findById(id, currentObj[key], depth + 1);
+		const result = findById(id, currentObj[key], [...path, key]);
 
 		if (result) {
 			return result;
@@ -1507,21 +1507,47 @@ const findById = (id, currentObj, depth = 0) => {
 	}
 };
 
-let totalSteps = 0;
 let toDo = input.length;
+const paths = [];
 
 while (toDo) {
+	// eslint-disable-next-line no-loop-func
 	input.forEach((rel) => {
 		const [source, orbiter] = rel;
-		const [item, depth] = findById(source, orbits) || [];
+		const [item, path] = findById(source, orbits) || [];
 
 		if (item && !item[orbiter]) {
-			totalSteps += (depth + 1);
 			item[orbiter] = {};
 			toDo -= 1;
+			paths.push({ orbiter, path });
 		}
 	});
+
+	console.log(`brute force iteration done with ${toDo} remaining`);
 }
 
-console.log(JSON.stringify(orbits, null, 4));
-console.log(totalSteps);
+// const loggableOrbits = JSON.stringify(orbits, null, 4);
+const sumOfOrbits = paths.reduce((sum, item) => sum + item.path.length, 0);
+const youOrbits = paths.find((item) => item.orbiter === 'YOU');
+const sanOrbits = paths.find((item) => item.orbiter === 'SAN');
+
+// console.log('orbits:', loggableOrbits);
+console.log('sum of orbits:', sumOfOrbits);
+
+let nearestAdjoiningSource;
+
+for (let i = sanOrbits.path.length - 1; i >= 0; i -= 1) {
+	const current = sanOrbits.path[i];
+
+	if (youOrbits.path.includes(current)) {
+		nearestAdjoiningSource = current;
+		break;
+	}
+}
+
+if (nearestAdjoiningSource) {
+	const a = youOrbits.path.slice(youOrbits.path.indexOf(nearestAdjoiningSource) + 1);
+	const b = sanOrbits.path.slice(youOrbits.path.indexOf(nearestAdjoiningSource) + 1);
+
+	console.log('distance between YOU and SAN', a.length + b.length);
+}
