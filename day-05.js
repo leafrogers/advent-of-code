@@ -190,3 +190,5 @@ while (index < inputs.length && inputs[index] !== 99) {
 
 log('Done with all op codes');
 log(inputs);
+
+module.exports = {};

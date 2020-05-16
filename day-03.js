@@ -97,7 +97,8 @@
 				xGridIndex += 1
 			) {
 				columns.push({
-					marker: (xGridIndex === 0 && yGridIndex === 0) ? CHAR_START : CHAR_SPACE
+					marker: (xGridIndex === 0 && yGridIndex === 0) ? CHAR_START : CHAR_SPACE,
+					history: []
 				});
 			}
 
@@ -143,9 +144,6 @@
 		wireIndex
 	}) => {
 		const spot = rows[yIndex][xIndex];
-
-		spot.history = spot.history || [];
-
 		const [mostRecentWireTraversal] = spot.history.slice(-1);
 
 		// console.log('mostRecentWireTraversal', mostRecentWireTraversal, wireIndex);

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "allowJs": true,
+    "alwaysStrict": true,
+    "checkJs": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "lib": ["es2017", "dom"],
+    "moduleResolution": "node",
+    "noEmit": true,
+    "noImplicitThis": true,
+    "strict": false
+  }
+}

@@ -4,7 +4,9 @@
   "description": "",
   "main": "day-01.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint:syntax": "eslint . && echo \"✔ Linted syntax\"",
+    "lint:types": "npx tsc && echo \"✔ Linted types\"",
+    "test": "npm run -s lint:syntax && npm run -s lint:types"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +15,7 @@
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
-    "nodemon": "^2.0.2"
+    "nodemon": "^2.0.2",
+    "typescript": "^3.9.2"
   }
 }
