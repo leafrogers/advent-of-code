@@ -1,0 +1,18 @@
+{
+  "name": "advent-of-code-2020",
+  "version": "0.0.0",
+  "description": "Answers for the Advent of Code 2020 challenges",
+  "main": "days/day-01.mjs",
+  "scripts": {
+    "test": "mocha days/*.test.mjs"
+  },
+  "author": "Leaf",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^7.14.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "mocha": "^8.2.1"
+  }
+}
